@@ -9,10 +9,7 @@ class ApiRules(ApiBase):
 
         files = rules.get_rules()
 
-        api_files = []
-        for name, file in files.items():
-            api_files.append(self.compile_file_object(file))
-
+        api_files = [self.compile_file_object(file) for name, file in files.items()]
         return self.send_valid_response(api_files)
 
     def set(self, user_id, session_id):

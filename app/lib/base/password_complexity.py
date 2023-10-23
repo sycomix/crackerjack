@@ -21,23 +21,19 @@ class PasswordComplexityManager:
             else:
                 special += 1
 
-        if lower < self.min_lower:
-            return False
-        elif upper < self.min_upper:
-            return False
-        elif digits < self.min_digits:
-            return False
-        elif special < self.min_special:
-            return False
-
-        return True
+        return (
+            lower >= self.min_lower
+            and upper >= self.min_upper
+            and digits >= self.min_digits
+            and special >= self.min_special
+        )
 
     def get_requirement_description(self):
-        desc = []
-        desc.append("Minimum Length is " + str(self.min_length))
-        desc.append("Minimum Lowercase: " + str(self.min_lower))
-        desc.append("Minimum Uppercase: " + str(self.min_upper))
-        desc.append("Minimum Digits: " + str(self.min_digits))
-        desc.append("Minimum Special: " + str(self.min_special))
-
+        desc = [
+            f"Minimum Length is {str(self.min_length)}",
+            f"Minimum Lowercase: {str(self.min_lower)}",
+            f"Minimum Uppercase: {str(self.min_upper)}",
+            f"Minimum Digits: {str(self.min_digits)}",
+            f"Minimum Special: {str(self.min_special)}",
+        ]
         return ", ".join(desc)

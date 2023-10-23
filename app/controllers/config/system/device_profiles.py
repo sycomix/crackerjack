@@ -41,7 +41,7 @@ def device_profile_save(id):
     device_profile_manager = provider.device_profiles()
 
     name = request.form['name'].strip() if 'name' in request.form else ''
-    enabled = True if 'enabled' in request.form else False
+    enabled = 'enabled' in request.form
     devices = request.form.getlist('devices', int)
 
     if len(name) == 0:

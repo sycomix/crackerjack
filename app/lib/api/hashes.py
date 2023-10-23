@@ -18,7 +18,7 @@ class ApiHashes(ApiBase):
             return self.send_access_denied_response()
 
         sessions.session_filesystem.save_hashes(user_id, session_id, data['data'])
-        contains_usernames = True if data['contains_usernames'] else False
+        contains_usernames = bool(data['contains_usernames'])
         sessions.set_hashcat_setting(session_id, 'contains_usernames', contains_usernames)
 
         return self.send_success_response()
@@ -29,10 +29,7 @@ class ApiHashes(ApiBase):
 
         files = hashes.get_uploaded_hashes()
 
-        api_files = []
-        for name, file in files.items():
-            api_files.append(self.compile_file_object(file))
-
+        api_files = [self.compile_file_object(file) for name, file in files.items()]
         return self.send_valid_response(api_files)
 
     def set_remote(self, user_id, session_id):
@@ -72,7 +69,7 @@ class ApiHashes(ApiBase):
         session = sessions.get(user_id=user_id, session_id=session_id)
         if not session:
             return self.send_access_denied_response()
-        elif not data['type'] in ['all', 'plain', 'cracked']:
+        elif data['type'] not in ['all', 'plain', 'cracked']:
             return self.send_error_response(5009, 'Invalid download type', '')
 
         return sessions.download_file(session_id, data['type'])

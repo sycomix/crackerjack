@@ -11,9 +11,10 @@ class ApiHashcat(ApiBase):
         supported_hashes = hashcat.get_supported_hashes()
         api_hashes = []
         for type, hashes in supported_hashes.items():
-            for code, hash in hashes.items():
-                api_hashes.append(self.__compile_hashtype(code, type + ' / ' + hash))
-
+            api_hashes.extend(
+                self.__compile_hashtype(code, f'{type} / {hash}')
+                for code, hash in hashes.items()
+            )
         return self.send_valid_response(api_hashes)
 
     def set_type(self, user_id, session_id):
@@ -53,7 +54,7 @@ class ApiHashcat(ApiBase):
         if not session:
             return self.send_access_denied_response()
 
-        optimised_kernel = True if data['optimise'] else False
+        optimised_kernel = bool(data['optimise'])
 
         sessions.set_hashcat_setting(session_id, 'optimised_kernel', optimised_kernel)
 

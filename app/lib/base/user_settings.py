@@ -17,6 +17,4 @@ class UserSettingsManager:
 
     def get(self, user_id, name, default=None):
         setting = UserSettings.query.filter(and_(UserSettings.user_id == user_id, UserSettings.name == name)).first()
-        if setting is None:
-            return default
-        return setting.value
+        return default if setting is None else setting.value

@@ -49,7 +49,7 @@ def api_set_status(key_id):
         return redirect(url_for('home.index'))
 
     action = request.form['action'].strip()
-    value = True if action == 'enable' else False
+    value = action == 'enable'
 
     if not apiman.set_key_status(key_id, value):
         flash('Could not set key status', 'error')

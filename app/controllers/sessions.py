@@ -133,7 +133,10 @@ def setup_hashcat(session_id):
     if len(supported_hashes) == 0:
         home_directory = system.get_system_user_home_directory()
         flash('Could not get the supported hashes from hashcat', 'error')
-        flash('If you have compiled hashcat from source, make sure %s/.hashcat directory exists and is writable' % home_directory, 'error')
+        flash(
+            f'If you have compiled hashcat from source, make sure {home_directory}/.hashcat directory exists and is writable',
+            'error',
+        )
 
     return render_template(
         'sessions/setup/hashcat.html',
@@ -163,7 +166,7 @@ def setup_hashcat_save(session_id):
     mode = int(request.form['mode'].strip())
     device_profile_id = int(request.form.get('device_profile', 0))
 
-    if mode != 0 and mode != 3:
+    if mode not in [0, 3]:
         # As all the conditions below depend on the mode, if it's wrong return to the previous page immediately.
         flash('Invalid attack mode selected', 'error')
         return redirect(url_for('sessions.setup_hashcat', session_id=session_id))
@@ -193,7 +196,9 @@ def setup_hashcat_save(session_id):
 
     redirect_to = 'wordlist' if mode == 0 else 'mask'
 
-    return redirect(url_for('sessions.setup_' + redirect_to, session_id=session_id))
+    return redirect(
+        url_for(f'sessions.setup_{redirect_to}', session_id=session_id)
+    )
 
 
 @bp.route('/<int:session_id>/setup/mask', methods=['GET'])
@@ -485,10 +490,10 @@ def status(session_id):
     provider = Provider()
     sessions = provider.sessions()
 
-    response = {'success': False, 'status': -1}
-
     if not sessions.can_access(current_user, session_id):
         flash('Access Denied', 'error')
+        response = {'success': False, 'status': -1}
+
         return json.dumps(response)
 
     user_id = 0 if current_user.admin else current_user.id
@@ -532,7 +537,7 @@ def active_action(session_id, action):
         flash('Invalid Action', 'error')
         return redirect(url_for('home.index'))
 
-    active = True if action == 'show' else False
+    active = action == 'show'
     sessions.set_active(session_id, active)
 
     flash('Session updated', 'success')

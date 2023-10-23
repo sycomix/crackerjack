@@ -94,14 +94,18 @@ class ApiSession(ApiBase):
         provider = Provider()
         sessions = provider.sessions()
 
-        session = sessions.get(user_id=user_id, session_id=session_id)
-        if not session:
+        if session := sessions.get(user_id=user_id, session_id=session_id):
+            return (
+                self.send_error_response(
+                    5007, 'Invalid termination date/time entered', ''
+                )
+                if not sessions.set_termination_datetime(
+                    session_id, data['date'], data['time']
+                )
+                else self.send_success_response()
+            )
+        else:
             return self.send_access_denied_response()
-
-        if not sessions.set_termination_datetime(session_id, data['date'], data['time']):
-            return self.send_error_response(5007, 'Invalid termination date/time entered', '')
-
-        return self.send_success_response()
 
     def notifications(self, user_id, session_id):
         required_fields = ['state']
@@ -117,7 +121,7 @@ class ApiSession(ApiBase):
         if not session:
             return self.send_access_denied_response()
 
-        notifications_enabled = True if data['state'] else False
+        notifications_enabled = bool(data['state'])
         sessions.set_notifications(session_id, notifications_enabled)
 
         return self.send_success_response()
@@ -135,7 +139,7 @@ class ApiSession(ApiBase):
         session = sessions.get(user_id=user_id, session_id=session_id)
         if not session:
             return self.send_access_denied_response()
-        elif not data['action'] in ['start', 'stop', 'pause', 'rebuild', 'restore']:
+        elif data['action'] not in ['start', 'stop', 'pause', 'rebuild', 'restore']:
             return self.send_error_response(5007, 'Invalid action to execute', '')
 
         # This is the current state.
@@ -146,7 +150,7 @@ class ApiSession(ApiBase):
             result = sessions.hashcat_action(session_id, 'start')
         elif data['action'] == 'stop':
             # Execute only if session is currently running or is paused.
-            if state == 1 or state == 4:
+            if state in [1, 4]:
                 result = sessions.hashcat_action(session_id, 'stop')
         elif data['action'] == 'pause':
             # Execute only if session is running.
@@ -158,11 +162,11 @@ class ApiSession(ApiBase):
                 result = sessions.hashcat_action(session_id, 'resume')
         elif data['action'] == 'rebuild':
             # Execute only if session is not running or is paused.
-            if state != 1 and state != 4:
+            if state not in [1, 4]:
                 result = sessions.hashcat_action(session_id, 'reset')
         elif data['action'] == 'restore':
             # Execute only if session is not running or is paused.
-            if state != 1 and state != 4:
+            if state not in [1, 4]:
                 result = sessions.hashcat_action(session_id, 'restore')
 
         if result is False:

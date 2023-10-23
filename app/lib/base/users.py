@@ -32,23 +32,24 @@ class UserManager:
         # If it's an existing user and it's the LDAP status that has changed, update only that and return
         # because otherwise it will clear the fields (as the fields are not posted during the submit.
         if user_id > 0 and user.ldap != ldap:
-            user.ldap = True if ldap == 1 else False
-            user.active = True if active == 1 else False
+            user.ldap = ldap == 1
+            user.active = active == 1
             db.session.commit()
             db.session.refresh(user)
             return True
 
         # If there was a username update, check to see if the new username already exists.
         if username != user.username:
-            u = self.get_by_username(username)
-            if u:
+            if u := self.get_by_username(username):
                 self.__error('Username already exists')
                 return False
 
         if ldap == 0:
             if password != '':
                 if not self.password_complexity.meets_requirements(password):
-                    self.__error('Password does not meet the complexity requirements: ' + self.password_complexity.get_requirement_description())
+                    self.__error(
+                        f'Password does not meet the complexity requirements: {self.password_complexity.get_requirement_description()}'
+                    )
                     return False
 
                 # If the password is empty, it means it wasn't changed.
@@ -65,9 +66,9 @@ class UserManager:
             user.full_name = full_name
             user.email = email
 
-        user.admin = True if admin == 1 else False
-        user.ldap = True if ldap == 1 else False
-        user.active = True if active == 1 else False
+        user.admin = admin == 1
+        user.ldap = ldap == 1
+        user.active = active == 1
 
         if user_id == 0:
             db.session.add(user)
@@ -104,11 +105,10 @@ class UserManager:
         return bcrypt.check_password_hash(hash, password)
 
     def validate_user_password(self, user_id, password):
-        user = self.get_by_id(user_id)
-        if not user:
+        if user := self.get_by_id(user_id):
+            return bcrypt.check_password_hash(user.password, password)
+        else:
             return False
-
-        return bcrypt.check_password_hash(user.password, password)
 
     def get_user_count(self):
         return db.session.query(UserModel).count()
@@ -120,18 +120,17 @@ class UserManager:
         return True
 
     def get_user_logins(self, user_id):
-        conditions = and_(1 == 1)
+        conditions = and_(True)
         if user_id > 0:
             conditions = and_(UserLogins.user_id == user_id)
 
-        logins = UserLogins.query\
-            .join(UserModel, UserLogins.user_id == UserModel.id)\
-            .add_columns(UserLogins.id, UserLogins.login_at, UserModel.username)\
-            .filter(conditions)\
-            .order_by(desc(UserLogins.id))\
+        return (
+            UserLogins.query.join(UserModel, UserLogins.user_id == UserModel.id)
+            .add_columns(UserLogins.id, UserLogins.login_at, UserModel.username)
+            .filter(conditions)
+            .order_by(desc(UserLogins.id))
             .all()
-
-        return logins
+        )
 
     def get_admins(self, only_active):
         conditions = and_(UserModel.admin == 1)

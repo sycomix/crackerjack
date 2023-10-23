@@ -27,20 +27,18 @@ from flask_login import current_user
 
 class Provider:
     def settings(self):
-        settings = SettingsManager()
-        return settings
+        return SettingsManager()
 
     def sessions(self):
-        session = SessionManager(
+        return SessionManager(
             self.hashcat(),
             self.screens(),
             self.wordlists(),
             self.filesystem(),
             self.webpush(),
             self.shell(),
-            self.device_profiles()
+            self.device_profiles(),
         )
-        return session
 
     def healthcheck(self):
         return HealthCheck()
@@ -133,11 +131,7 @@ class Provider:
 
     def webpush(self):
         admins = self.users().get_admins(True)
-        email = 'error@example.com'  # This should never happen.
-        if len(admins) > 0:
-            # Get the first one.
-            email = admins[0].email
-
+        email = admins[0].email if len(admins) > 0 else 'error@example.com'
         vapid_private = self.settings().get('vapid_private', '')
 
         return WebPushManager(vapid_private, email, '/static/images/favicon.png')

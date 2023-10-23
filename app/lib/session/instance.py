@@ -98,16 +98,14 @@ class SessionInstance:
             # Do checks for wordlist attacks.
             if self.hashcat.wordlist == '':
                 errors.append('No wordlist has been selected')
-        else:
-            # Do checks for bruteforce attacks.
-            if self.hashcat.mask_type == 0 and self.hashcat.masklist == '':
-                errors.append('No mask has been set')
-            elif self.hashcat.mask_type == 1 and self.hashcat.masklist == '':
-                errors.append('No mask has been set')
-            elif self.hashcat.mask_type == 2 and self.hashcat.mask == '':
-                errors.append('No mask has been set')
-            elif self.hashcat.mask_type == '':
-                errors.append('No mask has been set')
+        elif self.hashcat.mask_type == 0 and self.hashcat.masklist == '':
+            errors.append('No mask has been set')
+        elif self.hashcat.mask_type == 1 and self.hashcat.masklist == '':
+            errors.append('No mask has been set')
+        elif self.hashcat.mask_type == 2 and self.hashcat.mask == '':
+            errors.append('No mask has been set')
+        elif self.hashcat.mask_type == '':
+            errors.append('No mask has been set')
 
         # Check termination date
         if self.terminate_at is None:

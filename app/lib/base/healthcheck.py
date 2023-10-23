@@ -21,13 +21,13 @@ class HealthCheck:
         return errors
 
     def check_python_version(self, minimum_version, errors):
-        current_version = str(sys.version_info.major) + '.' + str(sys.version_info.minor) + '.' +  str(sys.version_info.micro)
+        current_version = f'{str(sys.version_info.major)}.{str(sys.version_info.minor)}.{str(sys.version_info.micro)}'
 
         if version.parse(current_version) >= version.parse(minimum_version):
             return True
 
         error_message = 'You are running Python v%d.%d.%d while the minimum supported version is v%s. Please upgrade Python and try again.' % \
-                        (sys.version_info.major, sys.version_info.minor, sys.version_info.micro, minimum_version)
+                            (sys.version_info.major, sys.version_info.minor, sys.version_info.micro, minimum_version)
         errors.append(error_message)
         return False
 
@@ -49,17 +49,17 @@ class HealthCheck:
         screenrc_path = screens.get_screenrc_path()
 
         if not os.path.isfile(screenrc_path):
-            errors.append(screenrc_path + ' does not exist')
+            errors.append(f'{screenrc_path} does not exist')
         elif not os.access(screenrc_path, os.R_OK):
-            errors.append(screenrc_path + ' is not readable')
+            errors.append(f'{screenrc_path} is not readable')
 
     def check_datapath(self, sessions, errors):
         datapath = sessions.session_filesystem.get_data_path()
 
         if not os.path.isdir(datapath):
-            errors.append(datapath + ' does not exist')
+            errors.append(f'{datapath} does not exist')
         elif not os.access(datapath, os.W_OK):
-            errors.append(datapath + ' is not writable')
+            errors.append(f'{datapath} is not writable')
 
     def check_screen_software(self, shell, errors):
         screen_binary = shell.execute(['which', 'screen'], user_id=0, log_to_db=False)

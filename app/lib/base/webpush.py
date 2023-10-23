@@ -40,8 +40,12 @@ class WebPushManager:
                 'icon': self.icon
             }
 
-            result = self.__send(data, subscription.endpoint, subscription.key, subscription.authsecret)
-            if result:
+            if result := self.__send(
+                data,
+                subscription.endpoint,
+                subscription.key,
+                subscription.authsecret,
+            ):
                 # Save notification details.
                 self.__log_notification(user_id, data)
 
@@ -65,17 +69,12 @@ class WebPushManager:
             webpush(
                 subscription_info={
                     'endpoint': endpoint,
-                    'keys': {
-                        'p256dh': key,
-                        'auth': authsecret
-                    },
-                    'contentEncoding': 'aesgcm'
+                    'keys': {'p256dh': key, 'auth': authsecret},
+                    'contentEncoding': 'aesgcm',
                 },
                 data=json.dumps(data),
                 vapid_private_key=self.vapid_private,
-                vapid_claims={
-                    'sub': 'mailto:' + self.admin_email
-                }
+                vapid_claims={'sub': f'mailto:{self.admin_email}'},
             )
 
             return True

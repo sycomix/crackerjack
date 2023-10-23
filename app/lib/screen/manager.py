@@ -13,8 +13,7 @@ class ScreenManager:
         return os.path.join(str(path.parent), 'files', 'screen', 'screen.rc')
 
     def get(self, name, log_file="", create=True):
-        screen = self.__find(name)
-        if screen:
+        if screen := self.__find(name):
             return screen
 
         return self.__create(name, log_file)
@@ -35,15 +34,9 @@ class ScreenManager:
         return self.__find(name)
 
     def __find(self, name):
-        found_screen = False
         screens = self.__load_screens()
 
-        for screen in screens:
-            if screen.name == name:
-                found_screen = screen
-                break
-
-        return found_screen
+        return next((screen for screen in screens if screen.name == name), False)
 
     def __load_screens(self):
         output = self.shell.execute(['screen', '-ls'], user_id=0)

@@ -17,6 +17,4 @@ class SettingsManager:
 
     def get(self, name, default=None):
         setting = ConfigModel.query.filter(ConfigModel.name == name).first()
-        if setting is None:
-            return default
-        return setting.value
+        return default if setting is None else setting.value

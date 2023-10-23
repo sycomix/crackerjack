@@ -33,7 +33,7 @@ def general_save():
     theme = request.form['theme'].strip()
     themes = filesystem.get_files(os.path.join(current_app.root_path, 'static', 'css', 'themes'))
 
-    if not (theme + '.css') in themes:
+    if f'{theme}.css' not in themes:
         flash('Invalid theme', 'error')
         return redirect(url_for('config.general'))
 

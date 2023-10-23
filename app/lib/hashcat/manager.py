@@ -16,8 +16,7 @@ class HashcatManager:
 
         # Split lines using \n and run strip against all elements of the list.
         lines = list(map(str.strip, output.split("\n")))
-        hashes = self.__parse_supported_hashes(lines)
-        return hashes
+        return self.__parse_supported_hashes(lines)
 
     def guess_hash(self, hash):
         supported_hashes = self.get_supported_hashes()
@@ -55,11 +54,7 @@ class HashcatManager:
         hashes = []
         for item in output:
             item = item.split("\n")
-            for guess in item:
-                if not guess.isnumeric():
-                    continue
-                hashes.append(guess)
-
+            hashes.extend(guess for guess in item if guess.isnumeric())
         return hashes
 
     def __parse_supported_hashes(self, lines):
@@ -73,7 +68,7 @@ class HashcatManager:
             elif found and line == '' and len(hashes) > 0:
                 break
             elif found and line != '':
-                if line[0] == '#' or line[0] == '=':
+                if line[0] in ['#', '=']:
                     continue
 
                 # We found a line that has a code/type/description - parse it.
@@ -97,7 +92,7 @@ class HashcatManager:
                             alphanum_hashes[parent_code]['data'][info['code']] = []
                         alphanum_hashes[parent_code]['data'][info['code']].append(info['name'])
                 else:
-                    if not info['category'] in hashes:
+                    if info['category'] not in hashes:
                         hashes[info['category']] = {}
 
                     hashes[info['category']][info['code']] = info['name']
@@ -131,7 +126,7 @@ class HashcatManager:
         for code, data in grouped.items():
             category = data['category']
             for code, name in data['items'].items():
-                if not category in hashes:
+                if category not in hashes:
                     hashes[category] = {}
 
                 hashes[category][code] = name
@@ -153,11 +148,9 @@ class HashcatManager:
         data = {}
         for type, hashes in hashes.items():
             for code, hash in hashes.items():
-                data[code] = type + ' / ' + hash
+                data[code] = f'{type} / {hash}'
 
-        # Sort dict - why you gotta be like that python? This is why you have no friends.
-        data = collections.OrderedDict(sorted(data.items(), key=lambda kv: kv[1]))
-        return data
+        return collections.OrderedDict(sorted(data.items(), key=lambda kv: kv[1]))
 
     def __get_hashtype_description(self, hash_type, supported_hashes=None):
         description = ''
@@ -193,7 +186,7 @@ class HashcatManager:
         return valid
 
     def build_export_password_command_line(self, hashfile, potfile, save_as, contains_usernames, hashtype):
-        command = [
+        return [
             self.hashcat_binary,
             '--potfile-path',
             potfile,
@@ -205,10 +198,8 @@ class HashcatManager:
             hashfile,
             '--hash-type',
             hashtype,
-            '--username' if contains_usernames == 1 else ''
+            '--username' if contains_usernames == 1 else '',
         ]
-
-        return command
 
     def build_command_line(self, session_name, mode, mask_type, masklist_path, mask, hashtype, hashfile, wordlist, rule, outputfile, potfile,
                            increment_min, increment_max, optimised_kernel, workload, contains_usernames, backend_devices):
@@ -321,9 +312,8 @@ class HashcatManager:
                     'position': int(part[1]),
                     'mask': ''
                 }
-            else:
-                if charset is not False:
-                    charset['mask'] = ' ' + part
+            elif charset is not False:
+                charset['mask'] = f' {part}'
 
         if charset is not False:
             charset['mask'] = charset['mask'].strip()
@@ -337,21 +327,16 @@ class HashcatManager:
                     all_charsets[i] = all_charsets[k]
                     all_charsets[k] = swap
 
-        # And now put into the final object. The number of question marks is the number of positions.
-        data = {
+        return {
             'mask': actual_mask,
             'positions': actual_mask.count('?'),
-            'groups': all_charsets
+            'groups': all_charsets,
         }
-
-        return data
 
     def parse_stream(self, stream):
         stream = str(stream)
         progress = self.__stream_get_last_progress(stream)
-        data = self.__convert_stream_progress(progress)
-
-        return data
+        return self.__convert_stream_progress(progress)
 
     def __convert_stream_progress(self, progress):
         data = {}
@@ -388,13 +373,14 @@ class HashcatManager:
         return "\n".join(progress)
 
     def __stream_find_last_progress_line(self, lines):
-        found = False
-        for i in range(len(lines) - 1, 0, -1):
-            if lines[i].startswith('Session..'):
-                found = i
-                break
-
-        return found
+        return next(
+            (
+                i
+                for i in range(len(lines) - 1, 0, -1)
+                if lines[i].startswith('Session..')
+            ),
+            False,
+        )
 
     def get_running_processes_commands(self):
         if len(self.hashcat_binary) == 0:
@@ -404,14 +390,8 @@ class HashcatManager:
         output = self.shell.execute(['ps', '-www', '-x', '-o', 'cmd'], user_id=0, log_to_db=False)
         output = output.split("\n")
 
-        processes = []
         length = len(self.hashcat_binary)
-        for line in output:
-            # Check if the beginning of the command path matches the path of the hashcat binary path.
-            if line[:length] == self.hashcat_binary:
-                processes.append(line)
-
-        return processes
+        return [line for line in output if line[:length] == self.hashcat_binary]
 
     def get_process_screen_names(self):
         processes = self.get_running_processes_commands()
@@ -428,13 +408,10 @@ class HashcatManager:
 
     def extract_session_from_process(self, process):
         parts = process.split(" ")
-        name = ''
-        for i, item in enumerate(parts):
-            if item == '--session':
-                name = parts[i + 1]
-                break
-
-        return name
+        return next(
+            (parts[i + 1] for i, item in enumerate(parts) if item == '--session'),
+            '',
+        )
 
     def is_process_running(self, screen_name):
         screens = self.get_process_screen_names()
@@ -458,10 +435,9 @@ class HashcatManager:
                 if raw['Status'] == 'Paused':
                     status = 4
 
-        # If it's not running, try to get the current status.
         if status == 0:
             if 'Status' in raw:
-                if raw['Status'] == 'Running' or raw['Status'] == 'Paused':
+                if raw['Status'] in ['Running', 'Paused']:
                     # If we got to this point it means that the process isn't currently running but there is a 'Status'
                     # feed. In this case, mark it as an error.
                     status = 98
@@ -528,8 +504,4 @@ class HashcatManager:
         matches = re.findall(r'Backend Device ID #(\d{1,}).*?Name.*?\:\s+(.*?)\n', output,
                              flags=re.DOTALL | re.MULTILINE)
 
-        devices = {}
-        for match in matches:
-            devices[match[0]] = match[1]
-
-        return devices
+        return {match[0]: match[1] for match in matches}

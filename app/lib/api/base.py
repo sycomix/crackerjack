@@ -7,10 +7,12 @@ from app.lib.api.definitions.file import File
 
 class ApiBase:
     def get_swagger_file(self, version):
-        if not version in ['v1']:
+        if version not in ['v1']:
             return 'Invalid API Version'
 
-        definition = os.path.join(os.path.dirname(__file__), 'swagger', version + '.yaml')
+        definition = os.path.join(
+            os.path.dirname(__file__), 'swagger', f'{version}.yaml'
+        )
         if not os.path.isfile(definition):
             return 'API definition does not exist'
 

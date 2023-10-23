@@ -29,7 +29,4 @@ class ApiAuth:
             return False
 
         user = UserModel.query.filter(UserModel.id == key.user_id).first()
-        if not user:
-            return False
-
-        return user
+        return False if not user else user

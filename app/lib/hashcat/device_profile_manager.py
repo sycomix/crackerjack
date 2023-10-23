@@ -8,29 +8,24 @@ class DeviceProfileManager:
         self.__supported_devices = supported_devices
 
     def get_device_profiles(self):
-        profiles = {}
         records = DeviceProfileModel.query.order_by('name').all()
-        for profile in records:
-            profiles[profile.id] = self.__load_profile(profile)
-
-        return profiles
+        return {profile.id: self.__load_profile(profile) for profile in records}
 
     def __load_profile(self, record):
         return {
             'id': record.id,
             'name': record.name,
             'devices': self.__parse_device(record.devices),
-            'enabled': True if record.enabled == 1 else False
+            'enabled': record.enabled == 1,
         }
 
     def __parse_device(self, saved_devices):
-        devices = {}
         saved_devices = saved_devices.split(',')
-        for device_id in saved_devices:
-            if self.is_valid_device(device_id):
-                devices[device_id] = self.__supported_devices[device_id]
-
-        return devices
+        return {
+            device_id: self.__supported_devices[device_id]
+            for device_id in saved_devices
+            if self.is_valid_device(device_id)
+        }
 
     def is_valid_device(self, device_id):
         return str(device_id) in self.__supported_devices
@@ -40,10 +35,7 @@ class DeviceProfileManager:
 
     def get_profile(self, id):
         profile = self.get(id=id)
-        if not profile:
-            return None
-
-        return self.__load_profile(profile[0])
+        return None if not profile else self.__load_profile(profile[0])
 
     def get(self, id=None, name=None, devices=None, enabled=None):
         query = DeviceProfileModel.query

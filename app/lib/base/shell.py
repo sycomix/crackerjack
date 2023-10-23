@@ -30,9 +30,9 @@ class ShellManager:
         for key, value in command.items():
             item = shlex.quote(key)
             if isinstance(value, str) and len(value) > 0:
-                item = item + ' ' + shlex.quote(value)
+                item = f'{item} {shlex.quote(value)}'
             else:
-                item = item + ' ' + str(value)
+                item = f'{item} {str(value)}'
 
             sanitised.append(item.strip())
 
@@ -59,14 +59,14 @@ class ShellManager:
         return record
 
     def get_logs(self, user_id=-1, page=0, per_page=0):
-        conditions = and_(1 == 1)
+        conditions = and_(True)
         # 0 is reserved for the system.
         if user_id >= 0:
             conditions = and_(ShellLogModel.user_id == user_id)
 
         logs = ShellLogModel.query \
-            .outerjoin(UserModel, ShellLogModel.user_id == UserModel.id) \
-            .add_columns(
+                .outerjoin(UserModel, ShellLogModel.user_id == UserModel.id) \
+                .add_columns(
                 ShellLogModel.id,
                 ShellLogModel.user_id,
                 ShellLogModel.command,
@@ -75,8 +75,8 @@ class ShellManager:
                 ShellLogModel.finished_at,
                 UserModel.username
             ) \
-            .filter(conditions) \
-            .order_by(desc(ShellLogModel.id))
+                .filter(conditions) \
+                .order_by(desc(ShellLogModel.id))
 
         if page == 0 and per_page == 0:
             logs = logs.all()

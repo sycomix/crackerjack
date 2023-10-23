@@ -9,10 +9,7 @@ class ApiWordlists(ApiBase):
 
         files = wordlists.get_wordlists()
 
-        api_files = []
-        for name, file in files.items():
-            api_files.append(self.compile_file_object(file))
-
+        api_files = [self.compile_file_object(file) for name, file in files.items()]
         return self.send_valid_response(api_files)
 
     def set_type(self, user_id, session_id):
@@ -28,7 +25,7 @@ class ApiWordlists(ApiBase):
         session = sessions.get(user_id=user_id, session_id=session_id)
         if not session:
             return self.send_access_denied_response()
-        elif not data['type'] in ['global', 'custom', 'cracked']:
+        elif data['type'] not in ['global', 'custom', 'cracked']:
             return self.send_error_response(5010, 'Invalid wordlist type', '')
 
         type = 0

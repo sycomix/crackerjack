@@ -45,7 +45,7 @@ def ldap_save():
     has_errors = False
     if ldap_enabled == 1:
         # If it's disabled it doesn't make sense to validate any settings.
-        for key, data in ldap_settings.items():
+        for data in ldap_settings.values():
             if len(data['value']) == 0:
                 has_errors = True
                 flash(data['error'], 'error')

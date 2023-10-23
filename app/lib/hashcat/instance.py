@@ -177,7 +177,7 @@ class HashcatInstance:
 
     @property
     def configured(self):
-        return True if self.settings else False
+        return bool(self.settings)
 
     def __get_hashcat_status(self):
         return self.hashcat.parse_stream(self.tail_screen)

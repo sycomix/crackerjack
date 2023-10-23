@@ -42,7 +42,11 @@ def login_process():
             return redirect(url_for('auth.login', next=next))
     elif ldap.is_enabled():
         ldap_result = ldap.authenticate(username, password)
-        if ldap_result is False:
+        if ldap_result is False or ldap_result['result'] not in [
+            ldap.AUTH_SUCCESS,
+            ldap.AUTH_CHANGE_PASSWORD,
+            ldap.AUTH_LOCKED,
+        ]:
             if len(ldap.error_message) > 0:
                 flash(ldap.error_message, 'error')
             else:
@@ -55,23 +59,16 @@ def login_process():
             session['ldap_time'] = int(time.time())
             flash('Your LDAP password has expired or needs changing', 'error')
             return redirect(url_for('auth.ldap_changepwd', next=next))
-        elif ldap_result['result'] == ldap.AUTH_LOCKED:
+        else:
             flash('Your AD account is disabled', 'error')
             return redirect(url_for('auth.login', next=next))
-        else:
-            if len(ldap.error_message) > 0:
-                flash(ldap.error_message, 'error')
-            else:
-                flash('Invalid credentials', 'error')
-            return redirect(url_for('auth.login', next=next))
-
         user = users.get_ldap_user(ldap_user['username'])
         if not user:
             # Create
             user = users.create_ldap_user(ldap_user['username'], ldap_user['fullname'], ldap_user['email'])
-            if not user:
-                flash('Could not create LDAP user', 'error')
-                return redirect(url_for('auth.login', next=next))
+        if not user:
+            flash('Could not create LDAP user', 'error')
+            return redirect(url_for('auth.login', next=next))
     else:
         flash('Invalid credentials', 'error')
         return redirect(url_for('auth.login', next=next))

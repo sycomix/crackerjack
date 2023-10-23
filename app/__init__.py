@@ -105,7 +105,7 @@ def create_app(config_class=None):
         if '/static/' in request.path:
             # Exclude session updates for /static/ URLs
             skip_session_update = True
-        elif skip_session_update is False and request.endpoint in app.view_functions:
+        elif not skip_session_update and request.endpoint in app.view_functions:
             # Exclude session updates for views that have @dont_update_session (is status checked in sessions).
             view_function = app.view_functions[request.endpoint]
             skip_session_update = hasattr(view_function, '_dont_update_session')

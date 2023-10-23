@@ -24,19 +24,12 @@ class TemplateManager:
         state = int(state)
         text = ''
 
-        if state == 0:
+        if state in {0, 3}:
             text = 'info'
-        elif state == 1:
+        elif state in {1, 5}:
             text = 'success'
-        elif state == 2:
+        elif state in {2, 98}:
             text = 'danger'
-        elif state == 3:
-            text = 'info'
         elif state == 4:
             text = 'warning'
-        elif state == 5:
-            text = 'success'
-        elif state == 98:
-            text = 'danger'
-
         return text

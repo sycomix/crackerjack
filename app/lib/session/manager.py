@@ -30,10 +30,13 @@ class SessionManager:
         return re.sub(r'\W+', '', name)
 
     def generate_name(self, length=12, prefix=''):
-        return prefix + ''.join(random.choice(string.ascii_letters + string.digits) for i in range(length))
+        return prefix + ''.join(
+            random.choice(string.ascii_letters + string.digits)
+            for _ in range(length)
+        )
 
     def __generate_screen_name(self, user_id, name):
-        return str(user_id) + '_' + name
+        return f'{str(user_id)}_{name}'
 
     def exists(self, user_id, name, active=True):
         return self.__get(user_id, name, active) is not None
@@ -51,7 +54,7 @@ class SessionManager:
         return SessionModel.query.filter(SessionModel.id == session_id).first()
 
     def create(self, user_id, description, prefix):
-        prefix = self.sanitise_name(prefix) + '_'
+        prefix = f'{self.sanitise_name(prefix)}_'
         name = self.generate_name(prefix=prefix, length=4)
 
         # If it exists (shouldn't), return it.
@@ -72,7 +75,7 @@ class SessionManager:
         db.session.refresh(session)
 
         # We need to append the session_id to the session name.
-        name = name + '_' + str(session.id)
+        name = f'{name}_{str(session.id)}'
         session.name = name
         session.screen_name = self.__generate_screen_name(user_id, name)
 
@@ -93,7 +96,7 @@ class SessionManager:
             )
         ).first()
 
-        return True if session else False
+        return bool(session)
 
     def can_access_history(self, user, session_id, history_id):
         if user.admin:
@@ -106,7 +109,7 @@ class SessionManager:
             )
         ).first()
 
-        return True if history else False
+        return bool(history)
 
     def get(self, user_id=0, session_id=0, active=None):
         query = SessionModel.query
@@ -359,13 +362,7 @@ class SessionManager:
     def get_hashcat_status(self, user_id, session_id):
         screen_log_file = self.session_filesystem.find_latest_screenlog(user_id, session_id)
         stream = self.session_filesystem.tail_file(screen_log_file, 4096)
-        if len(stream) == 0:
-            return {}
-
-        # Pass to hashcat class to parse and return a dict with all the data.
-        data = self.hashcat.parse_stream(stream)
-
-        return data
+        return {} if len(stream) == 0 else self.hashcat.parse_stream(stream)
 
     def download_file(self, session_id, which_file):
         session = self.get(session_id=session_id)[0]
@@ -373,18 +370,18 @@ class SessionManager:
         save_as = session.description
         if which_file == 'cracked':
             file = self.session_filesystem.get_crackedfile_path(session.user_id, session_id)
-            save_as = save_as + '.cracked.txt'
-        elif which_file == 'hashes' or which_file == 'all':
+            save_as = f'{save_as}.cracked.txt'
+        elif which_file in ['hashes', 'all']:
             file = self.session_filesystem.get_hashfile_path(session.user_id, session_id)
-            save_as = save_as + '.hashes.txt'
+            save_as = f'{save_as}.hashes.txt'
         elif which_file == 'plain':
             file = self.session_filesystem.get_custom_file_path(session.user_id, session_id, prefix='pwd_wordlist')
             self.export_cracked_passwords(session_id, file)
-            save_as = save_as + '.plain.txt'
+            save_as = f'{save_as}.plain.txt'
         else:
             # It means it's a raw/screen log file.
             files = self.get_data_files(session.user_id, session_id)
-            if not which_file in files:
+            if which_file not in files:
                 return 'Error'
             file = files[which_file]['path']
             save_as = which_file
@@ -427,12 +424,7 @@ class SessionManager:
 
         for process in processes:
             name = self.hashcat.extract_session_from_process(process)
-            found = False
-            for session in sessions:
-                if session.screen_name == name:
-                    found = True
-                    break
-
+            found = any(session.screen_name == name for session in sessions)
             key = 'web' if found else 'ssh'
             data['stats'][key] = data['stats'][key] + 1
             data['commands'][key].append(process)
@@ -440,7 +432,7 @@ class SessionManager:
         return data
 
     def set_termination_datetime(self, session_id, date, time):
-        date_string = date + ' ' + time
+        date_string = f'{date} {time}'
 
         # Check if the format is valid.
         try:
@@ -477,7 +469,7 @@ class SessionManager:
             session = session[0]
 
             status = session.hashcat.state
-            if status == 1 or status == 4:
+            if status in [1, 4]:
                 # If it's running or paused, terminate.
                 print("Terminating session %d" % past_session.id)
                 self.hashcat_action(session.id, 'stop')

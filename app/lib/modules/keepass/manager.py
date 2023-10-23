@@ -30,5 +30,4 @@ class ModuleKeePassManager:
                 # Uh oh
                 pass
 
-        output = f.getvalue()
-        return output
+        return f.getvalue()

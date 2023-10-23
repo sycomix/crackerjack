@@ -35,7 +35,7 @@ class ApiMask(ApiBase):
         if not session:
             return self.send_access_denied_response()
 
-        enable_increments = True if data['state'] else False
+        enable_increments = bool(data['state'])
         increment_min = int(data['min'])
         increment_max = int(data['max'])
 

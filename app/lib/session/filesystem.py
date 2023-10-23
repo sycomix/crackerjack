@@ -85,7 +85,7 @@ class SessionFileSystem:
         if not os.path.isfile(path):
             return True
 
-        new_path = path + '.' + str(int(time.time()))
+        new_path = f'{path}.{int(time.time())}'
         os.rename(path, new_path)
         return True
 
@@ -103,7 +103,7 @@ class SessionFileSystem:
 
         # If we try to read more than the actual size of the file, it will throw an error.
         filesize = os.path.getsize(file)
-        bytes_to_read = filesize if filesize < length else length
+        bytes_to_read = min(filesize, length)
 
         # Read the last 4KB from the screen log file.
         with open(file, 'rb') as file:
@@ -138,13 +138,13 @@ class SessionFileSystem:
         path = os.path.dirname(filepath)
         files = self.filesystem.get_files(path)
 
-        screen_files = []
         len_to_look_for = len(filename) + 1
-        for name, data in files.items():
-            if name[:len_to_look_for] == (filename + '.'):
-                screen_files.append(name)
-
-        if len(screen_files) == 0:
+        screen_files = [
+            name
+            for name, data in files.items()
+            if name[:len_to_look_for] == f'{filename}.'
+        ]
+        if not screen_files:
             # Return the original path if no historic files exist.
             return filepath
 

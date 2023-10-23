@@ -7,25 +7,23 @@ class HashIdentifier:
 
     def __find(self, hash):
         if hash[0] == '$':
-            matches = self.__find_hash_format_dollar(hash)
+            return self.__find_hash_format_dollar(hash)
         elif self.__is_hex(hash):
-            matches = self.__find_hash_format_hex(hash)
+            return self.__find_hash_format_hex(hash)
         elif ':' in hash:
-            matches = self.__find_hash_format_colon(hash)
+            return self.__find_hash_format_colon(hash)
         elif '{' in hash and '}' in hash:
-            matches = self.__find_hash_format_braces(hash)
+            return self.__find_hash_format_braces(hash)
         elif ',' in hash:
-            matches = self.__find_hash_format_comma(hash)
+            return self.__find_hash_format_comma(hash)
         elif '$' in hash:
-            matches = self.__find_hash_format_dollar_within(hash)
+            return self.__find_hash_format_dollar_within(hash)
         elif '@' in hash:
-            matches = self.__find_hash_format_at(hash)
+            return self.__find_hash_format_at(hash)
         elif '*' in hash:
-            matches = self.__find_hash_format_asterisk(hash)
+            return self.__find_hash_format_asterisk(hash)
         else:
-            matches = self.__find_hash_format_misc(hash)
-
-        return matches
+            return self.__find_hash_format_misc(hash)
 
     def __find_hash_format_dollar(self, hash):
         matches = []
@@ -77,8 +75,7 @@ class HashIdentifier:
                 else:
                     matches.extend([10400, 10410])
             elif subhash[0] == '2':
-                matches.append(10500)
-                matches.append(25400)
+                matches.extend((10500, 25400))
             elif subhash[0] == '5':
                 matches.extend([10600, 10700])
         elif sig == 'postgres' and subhash[0] == 'postgres' and self.__is_hex(subhash[2]):
@@ -333,9 +330,43 @@ class HashIdentifier:
         elif len(hash) == 128:
             matches.extend([1700, 6100, 11800, 17600, 18000, 21000])
         elif len(hash) >= 1024:
-            matches.extend([6211, 6212, 6213, 6221, 6222, 6223, 6231, 6232, 6233, 6241, 6242, 6243])
-            matches.extend([13711, 13712, 13713, 13721, 13722, 13723, 13731, 13732, 13733])
-            matches.extend([13741, 13742, 13743, 13751, 13752, 13753, 13761, 13762, 13763, 13771, 13772, 13773])
+            matches.extend(
+                [
+                    6211,
+                    6212,
+                    6213,
+                    6221,
+                    6222,
+                    6223,
+                    6231,
+                    6232,
+                    6233,
+                    6241,
+                    6242,
+                    6243,
+                    13711,
+                    13712,
+                    13713,
+                    13721,
+                    13722,
+                    13723,
+                    13731,
+                    13732,
+                    13733,
+                    13741,
+                    13742,
+                    13743,
+                    13751,
+                    13752,
+                    13753,
+                    13761,
+                    13762,
+                    13763,
+                    13771,
+                    13772,
+                    13773,
+                ]
+            )
         elif len(hash) >= 512:
             if len(hash) == 786:
                 matches.extend([2500, 2501])
@@ -361,7 +392,7 @@ class HashIdentifier:
                     matches.extend([7300])
             elif self.__is_hex(hash[0]):
                 if len(hash[0]) <= 16:
-                    if len(hash[0]) == 8 and len(hash[0]) == 8:
+                    if len(hash[0]) == 8:
                         if hash[1] == '00000000':
                             matches.extend([11500])
                         else:
@@ -369,11 +400,60 @@ class HashIdentifier:
                     else:
                         matches.extend([3100, 14000, 14100])
                 elif len(hash[0]) == 32:
-                    matches.extend([10, 11, 12, 20, 21, 23, 24, 30, 40, 50, 60, 1100, 2611, 2711, 2811, 3710, 3800, 3910])
-                    matches.extend([4010, 4110, 11000, 21200, 21300])
+                    matches.extend(
+                        [
+                            10,
+                            11,
+                            12,
+                            20,
+                            21,
+                            23,
+                            24,
+                            30,
+                            40,
+                            50,
+                            60,
+                            1100,
+                            2611,
+                            2711,
+                            2811,
+                            3710,
+                            3800,
+                            3910,
+                            4010,
+                            4110,
+                            11000,
+                            21200,
+                            21300,
+                        ]
+                    )
                 elif len(hash[0]) == 40:
-                    matches.extend([110, 112, 120, 121, 130, 140, 150, 160, 4510, 4520, 4521, 4522, 4710, 4711, 4900])
-                    matches.extend([5800, 8400,  13500, 13900, 14400, 21100, 24300])
+                    matches.extend(
+                        [
+                            110,
+                            112,
+                            120,
+                            121,
+                            130,
+                            140,
+                            150,
+                            160,
+                            4510,
+                            4520,
+                            4521,
+                            4522,
+                            4710,
+                            4711,
+                            4900,
+                            5800,
+                            8400,
+                            13500,
+                            13900,
+                            14400,
+                            21100,
+                            24300,
+                        ]
+                    )
                 elif len(hash[0]) == 64:
                     matches.extend([1410, 1420, 1430, 1440, 1450, 1460, 11750, 11760, 12600, 13800, 20710, 22300])
                 elif len(hash[0]) == 128:
@@ -523,20 +603,10 @@ class HashIdentifier:
 
     def __is_base64(self, include_dot, *args):
         chars = self.b64dot if include_dot else self.b64
-        all_b64 = True
-        for arg in args:
-            if not all(c in chars for c in arg):
-                all_b64 = False
-                break
-        return all_b64
+        return not any(any(c not in chars for c in arg) for arg in args)
 
     def __is_hex(self, *args):
-        all_hex = True
-        for arg in args:
-            if not all(c in string.hexdigits for c in arg):
-                all_hex = False
-                break
-        return all_hex
+        return not any(any(c not in string.hexdigits for c in arg) for arg in args)
 
     def guess(self, hash):
         return [] if len(hash) == 0 else self.__find(hash)

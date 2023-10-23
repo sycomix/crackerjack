@@ -59,8 +59,9 @@ def profile_save(user_id):
             return redirect(url_for('config.profile', user_id=user_id))
         elif not users.password_complexity.meets_requirements(new_password):
             flash(
-                'Password does not meet complexity requirements: ' + users.password_complexity.get_requirement_description(),
-                'error')
+                f'Password does not meet complexity requirements: {users.password_complexity.get_requirement_description()}',
+                'error',
+            )
             return redirect(url_for('config.profile', user_id=user_id))
 
         users.update_password(user_id, new_password)

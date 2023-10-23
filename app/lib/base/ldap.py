@@ -152,8 +152,7 @@ class LDAPManager:
         }
 
     def authenticate(self, username, password):
-        connection = self.__connect(username, password)
-        if connection:
+        if connection := self.__connect(username, password):
             # Authentication worked - close connection.
             connection.unbind()
 
@@ -199,20 +198,20 @@ class LDAPManager:
         return data
 
     def __process_result(self, result):
-        # https://ldapwiki.com/wiki/Common%20Active%20Directory%20Bind%20Errors
-        # Weird way to get the AD response as it only returns a string rather than the code in a property. It could
-        # be the ldap3 library or the way AD returns the code, but I can't fix either one soooo here it is!
-        ldap_responses = {
-            'data 532': self.AUTH_CHANGE_PASSWORD,  # ERROR_PASSWORD_EXPIRED
-            'data 773': self.AUTH_CHANGE_PASSWORD, # ERROR_PASSWORD_MUST_CHANGE
-            'data 533': self.AUTH_LOCKED, # ERROR_ACCOUNT_DISABLED
-        }
-
         if result is None:
             return False
 
         response = self.AUTH_INVALID_LOGIN
         if ('message' in result) and (len(result['message']) > 0):
+            # https://ldapwiki.com/wiki/Common%20Active%20Directory%20Bind%20Errors
+            # Weird way to get the AD response as it only returns a string rather than the code in a property. It could
+            # be the ldap3 library or the way AD returns the code, but I can't fix either one soooo here it is!
+            ldap_responses = {
+                'data 532': self.AUTH_CHANGE_PASSWORD,  # ERROR_PASSWORD_EXPIRED
+                'data 773': self.AUTH_CHANGE_PASSWORD, # ERROR_PASSWORD_MUST_CHANGE
+                'data 533': self.AUTH_LOCKED, # ERROR_ACCOUNT_DISABLED
+            }
+
             for seed, code in ldap_responses.items():
                 if seed in result['message']:
                     response = code
@@ -261,8 +260,7 @@ class LDAPManager:
     def test_connection(self):
         self.error_message = ''
         self.error_details = ''
-        connection = self.__connect(self.bind_user, self.bind_pass)
-        if connection:
+        if connection := self.__connect(self.bind_user, self.bind_pass):
             connection.unbind()
             return True
         return False

@@ -74,4 +74,4 @@ class SystemManager:
         if len(user) == 0:
             user = self.get_system_user()
 
-        return self.shell.execute(['/bin/bash', '-c', 'eval echo ~' + user], user_id=0)
+        return self.shell.execute(['/bin/bash', '-c', f'eval echo ~{user}'], user_id=0)

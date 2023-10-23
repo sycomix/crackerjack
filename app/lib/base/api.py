@@ -22,7 +22,7 @@ class ApiManager:
         return item
 
     def get(self, user_id=0):
-        conditions = and_(1 == 1)
+        conditions = and_(True)
         if user_id > 0:
             conditions = and_(ApiKeys.user_id == user_id)
 
@@ -39,7 +39,7 @@ class ApiManager:
             )
         ).first()
 
-        return True if apikey else False
+        return bool(apikey)
 
     def set_key_status(self, key_id, value):
         apikey = ApiKeys.query.filter(ApiKeys.id == key_id).first()

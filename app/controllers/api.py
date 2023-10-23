@@ -354,10 +354,7 @@ def rules():
     base = ApiBase()
     rules = ApiRules()
 
-    if not auth.auth(True):
-        return base.send_access_denied_response()
-
-    return rules.get()
+    return rules.get() if auth.auth(True) else base.send_access_denied_response()
 
 
 @bp.route('/rules/<int:session_id>', methods=['POST'])
